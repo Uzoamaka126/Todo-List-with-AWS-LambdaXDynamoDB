@@ -11,7 +11,7 @@ package:
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -20,7 +20,10 @@ provider:
     lambda: true
 
 environment:
-  TODOS_TABLE: Todos-${self:provider.stage}
+  # TODOS_TABLE: Todos-${self:provider.stage}
+  PROJECT_NAME: udacity-p4
+  TODOS_TABLE: udacity-p4-serverless-application-todo-${self:provider.stage}
+  S3_BUCKET_NAME: udacity-p4-serverless-application-todo-${self:provider.stage}
 
 iamRoleStatements:
   - Effect: Allow
@@ -113,20 +116,8 @@ resources:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
         ValidateRequestParameters: false
-
-    UsersDynamoDBTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.USERS_TABLE}
-         
-    TodosDynamoDBTable:
+    
+    TodosTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
