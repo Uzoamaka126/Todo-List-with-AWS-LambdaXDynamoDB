@@ -9,20 +9,16 @@ const XAWS = AWSXRay.captureAWS(AWS)
 
 const logger = createLogger('todo-access');
 
-const createDynamoDBClient = () => {
-  return new XAWS.DynamoDB.DocumentClient();
-}
-
 export class TodoAccess {
   constructor(
-    private readonly docClient: DocumentClient = createDynamoDBClient(),
+    private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
     private readonly bucketName = process.env.TODOS_S3_BUCKET,
     private readonly indexName = process.env.TODOS_TABLE_IDX
   ) {}
 
   async getAllTodos(userId: string): Promise<TodoItem[]> {
-    logger.info('Getting all todo items')
+    logger.info('Getting all todos')
 
     const result = await this.docClient
       .query({

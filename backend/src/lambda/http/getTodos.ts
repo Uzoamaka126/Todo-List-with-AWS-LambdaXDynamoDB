@@ -3,15 +3,17 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } f
 import { getAllUserTodos } from '../../businessLogic/todosLogic'
 import { getToken } from '../../auth/utils';
 import { createLogger } from '../../utils/logger'
+import * as middy from 'middy';
 
 const logger = createLogger('get_todos');
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // TODO: Get all TODO items for a current user
-  console.log('Caller event', event);
+  logger.info('Processing request', event);
+
   try {
     const jwtToken: string = getToken(event.headers.Authorization)
-    const todos = await getAllUserTodos(jwtToken)
+    const todos = await getAllUserTodos(jwtToken);
 
     return {
       statusCode: 200,
@@ -23,12 +25,12 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
         items: todos
       })
     }
-  } catch (e) {
-    logger.error('Error: ' + e.message)
+  } catch (err) {
+    logger.error('Error: ' + err.message)
 
     return {
       statusCode: 500,
-      body: e.message
+      body: err.message
     }
   }
-}
+})
