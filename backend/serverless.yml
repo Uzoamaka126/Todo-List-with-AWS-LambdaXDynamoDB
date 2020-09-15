@@ -22,9 +22,9 @@ provider:
 
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
-    TODO_ID_INDEX: Todos-idx-${self:provider.environment.TODOS_TABLE}
+    TODOS_TABLE_INDEX: Todos-idx-${self:provider.environment.TODOS_TABLE}
     # PROJECT_NAME: udacity-p4
-    S3_BUCKET_NAME: udacity-p4-serverless-application-todo-${self:provider.stage}
+    TODOS_S3_BUCKET: udacity-p4-serverless-application-todo-${self:provider.stage}
     # AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
     # AUTH_0_SECRET_FIELD: auth0Secret
     SIGNED_URL_EXPIRATION: 300
@@ -81,7 +81,6 @@ functions:
           authorizer: Auth
           method: get
           cors: true
-          method: get
           reqvalidator: RequestBodyValidator
           path: todos/{userId}/items
           documentation:
@@ -93,7 +92,7 @@ functions:
     - Effect: Allow
       Action:
         - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_TABLE_IDX}
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_TABLE_INDEX}
     - Effect: Allow
       Action:
         - xray:PutTraceSegments
@@ -162,6 +161,17 @@ functions:
 resources:
   Resources:
     # TODO: Add any necessary AWS resources
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+          
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
       Properties:
@@ -185,7 +195,7 @@ resources:
           - AttributeName: todoId
             KeyType: RANGE
         LocalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODOS_TABLE_IDX}
+          - IndexName: ${self:provider.environment.TODOS_TABLE_INDEX}
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
