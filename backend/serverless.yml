@@ -5,7 +5,7 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-aws-documentation
   - serverless-reqvalidator-plugin
-  - serverless-webpack
+  # - serverless-webpack
 
 package:
   individually: true
@@ -23,7 +23,6 @@ provider:
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_TABLE_INDEX: Todos-idx-${self:provider.environment.TODOS_TABLE}
-    # PROJECT_NAME: udacity-p4
     TODOS_S3_BUCKET: udacity-p4-serverless-application-todo-${self:provider.stage}
     # AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
     # AUTH_0_SECRET_FIELD: auth0Secret
@@ -40,7 +39,6 @@ provider:
         - codedeploy:*
       Resource:
         - '*'
-      # Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -49,7 +47,9 @@ provider:
 custom:
   defaultStage: dev
   defaultRegion: us-east-2
-  webpackIncludeModules: true
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
   topicName: todosTopic-${self:provider.stage}
   documentation:
     api:
@@ -81,8 +81,8 @@ functions:
           authorizer: Auth
           method: get
           cors: true
-          reqvalidator: RequestBodyValidator
-          path: todos/{userId}/items
+          # reqvalidator: RequestBodyValidator
+          path: todos/{userId}
           documentation:
             summary: Get a list of todos
             description: Get a list of todos
@@ -153,7 +153,6 @@ functions:
         Resource:
           - '*'
           
-
   # TODO: Configure this function
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
@@ -175,7 +174,6 @@ functions:
         Resource:
           - '*'
    
-
   # TODO: Configure this function
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
@@ -198,7 +196,6 @@ functions:
         Resource:
           - '*'
     
-
 resources:
   Resources:
     # TODO: Add any necessary AWS resources
