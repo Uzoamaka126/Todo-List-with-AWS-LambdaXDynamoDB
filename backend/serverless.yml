@@ -3,16 +3,12 @@ service:
 
 plugins:
   - serverless-webpack
-  # - serverless-reqvalidator-plugin
   - serverless-aws-documentation
   - serverless-iam-roles-per-function
 
-# package:
-#   individually: true
-
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-2'}
@@ -24,7 +20,7 @@ provider:
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_TABLE_INDEX: Todos-idx-${self:provider.environment.TODOS_TABLE}
-    TODOS_S3_BUCKET: udacity-p4-serverless-application-todo-${self:provider.stage}
+    TODOS_S3_BUCKET: amaka-p4-serverless-application-todo-${self:provider.stage}
     # AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
     # AUTH_0_SECRET_FIELD: auth0Secret
     SIGNED_URL_EXPIRATION: 300
@@ -33,10 +29,10 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-        # - dynamodb:Scan
-        # - dynamodb:PutItem
-        # - dynamodb:GetItem
-        # - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:Query
         - codedeploy:*
       Resource:
         - '*'
@@ -46,10 +42,6 @@ provider:
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 custom:
-  # dynamodb:
-  #   start:
-  #     migrate: true
-  #     inMemory: true
   defaultStage: dev
   defaultRegion: us-east-2
   webpack:
@@ -70,13 +62,13 @@ custom:
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
-    # iamRoleStatements:
-    #   - Effect: Allow
-    #     Action:
-    #       - xray:PutTraceSegments
-    #       - xray:PutTelemetryRecords
-    #     Resource:
-    #       - '*'
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
+        Resource:
+          - '*'
 
   # TODO: Configure this function
   GetTodos:
@@ -86,7 +78,7 @@ functions:
           authorizer: Auth
           method: get
           cors: true
-          path: todos/{userId}
+          path: todos
           documentation:
             summary: Get a list of todos
             description: Get a list of todos
@@ -95,56 +87,79 @@ functions:
       Action:
         - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_TABLE_INDEX}
-    
+    - Effect: Allow
+      Action:
+        - xray:PutTraceSegments
+        - xray:PutTelemetryRecords
+      Resource:
+        - '*'
+        
   # TODO: Configure this function
-  # CreateTodo:
-  #   handler: src/lambda/http/createTodo.handler
-  #   events:
-  #     - http:
-  #         cors: true
-  #         method: post
-  #         authorizer: Auth
-  #         path: todos
-  #         documentation:
-  #           summary: Create a new Todo
-  #           description: Create a new todo
-  #   iamRoleStatements:
-  #     - Effect: Allow
-  #       Action:
-  #         - dynamodb:PutItem
-  #       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+  CreateTodo:
+    handler: src/lambda/http/createTodo.handler
+    events:
+      - http:
+          cors: true
+          method: post
+          authorizer: Auth
+          path: todos
+          documentation:
+            summary: Create a new Todo
+            description: Create a new todo
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
+        Resource:
+          - '*'
 
   # TODO: Configure this function
-  # UpdateTodo:
-  #   handler: src/lambda/http/updateTodo.handler
-  #   events:
-  #     - http:
-  #         authorizer: Auth
-  #         cors: true
-  #         method: patch
-  #         path: todos/{todoId}
-  #   iamRoleStatements:
-  #     - Effect: Allow
-  #       Action:
-  #         - dynamodb:UpdateItem
-  #       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-  #     
+  UpdateTodo:
+    handler: src/lambda/http/updateTodo.handler
+    events:
+      - http:
+          authorizer: Auth
+          cors: true
+          method: patch
+          path: todos/{todoId}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
+        Resource:
+          - '*'
           
   # TODO: Configure this function
-  # DeleteTodo:
-  #   handler: src/lambda/http/deleteTodo.handler
-  #   events:
-  #     - http:
-  #         authorizer: Auth
-  #         cors: true
-  #         method: delete
-  #         path: todos/{todoId}
-  #   iamRoleStatements:
-  #     - Effect: Allow
-  #       Action:
-  #         - dynamodb:DeleteItem
-  #       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-   
+  DeleteTodo:
+    handler: src/lambda/http/deleteTodo.handler
+    events:
+      - http:
+          authorizer: Auth
+          cors: true
+          method: delete
+          path: todos/{todoId}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
+        Resource:
+          - '*'
+
   # TODO: Configure this function
   # GenerateUploadUrl:
   #   handler: src/lambda/http/generateUploadUrl.handler

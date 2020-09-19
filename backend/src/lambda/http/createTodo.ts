@@ -1,5 +1,5 @@
 import 'source-map-support/register';
-import { cors } from 'middy/middlewares';
+// import { cors } from 'middy/middlewares';
 import * as middy from 'middy';
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import { createTodo } from '../../businessLogic/todosLogic'
@@ -19,10 +19,10 @@ export const handler: APIGatewayProxyHandler = middy(async (event: APIGatewayPro
 
     return {
       statusCode: 201,
-      // headers: {
-      //   'Access-Control-Allow-Origin': '*',
-      //   'Access-Control-Allow-Credentials': true
-      // },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true
+      },
       body: JSON.stringify({
         newTodoItem
       })
@@ -36,8 +36,8 @@ export const handler: APIGatewayProxyHandler = middy(async (event: APIGatewayPro
   }
 });
 
-handler.arguments(
-  cors({
-    credentials: true
-  })
-);
+// handler.arguments(
+//   cors({
+//     credentials: true
+//   })
+// );
