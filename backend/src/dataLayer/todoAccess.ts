@@ -98,7 +98,7 @@ export class TodoAccess {
         }
       })
       .promise()
-    return userId
+    return userId;
   }
 
   async generateUploadUrl(todoId: string): Promise<string> {

@@ -57,8 +57,8 @@ export const deleteTodo = async (
 ): Promise<string> => {
   logger.info('In deleteTodo() function')
 
-  const userId = parseUserId(jwtToken)
-  logger.info('User Id: ' + userId)
+  const userId = parseUserId(jwtToken);
+  logger.info('User Id: ' + userId);
 
   return await todoAccess.deleteTodo(todoId, userId)
 }

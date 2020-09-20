@@ -14,21 +14,21 @@ export const handler = middy(
 
     try {
       await deleteTodo(todoId, jwtToken);
+
       return {
         statusCode: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Credentials': true
         },
-        // return an empty body
         body: ''
       }
-    } catch (err) {
-      logger.error('Error: ' + err.message)
+    } catch (e) {
+      logger.error('Error: ' + e.message)
 
       return {
         statusCode: 500,
-        body: err.message
+        body: e.message
       }
     }
   }
