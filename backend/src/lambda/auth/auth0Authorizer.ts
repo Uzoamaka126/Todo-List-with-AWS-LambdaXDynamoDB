@@ -58,10 +58,10 @@ export const handler = async (
 // You should implement it similarly to how it was implemented for the exercise for the lesson 5
 // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
-  const token = getToken(authHeader);
-  const jwt: Jwt = decode(token, { complete: true }) as Jwt
-  const jwtKid = jwt.header.kid;
-  let cert: string | Buffer;
+//   const token = getToken(authHeader);
+//   const jwt: Jwt = decode(token, { complete: true }) as Jwt
+//   const jwtKid = jwt.header.kid;
+//   let cert: string | Buffer;
 
 //   try {
 //     const response = await Axios.get(jwksUrl);
@@ -73,24 +73,48 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 //   } catch (err) {
 //     throw new Error('something went wrong with token');
 //   }
+  const token = getToken(authHeader);  
   try {
-    if(!jwt){
-      throw new Error('invalid token')
-     }
-    const jwks = await Axios.get(jwksUrl);
-    const signingKey = jwks.data.keys.filter(k => k.kid === jwtKid)[0];
+//     if(!jwt){
+//       throw new Error('invalid token')
+//      }
+//     const jwks = await Axios.get(jwksUrl);
+//     const signingKey = jwks.data.keys.filter(k => k.kid === jwtKid)[0];
 
-    if (!signingKey) {
-      throw new Error(`Unable to find a signing key that matches '${jwtKid}'`);
-    }
-    const { x5c } = signingKey;
+//     if (!signingKey) {
+//       throw new Error(`Unable to find a signing key that matches '${jwtKid}'`);
+//     }
+//     const { x5c } = signingKey;
 
-    cert = `-----BEGIN CERTIFICATE-----\n${x5c[0]}\n-----END CERTIFICATE-----`;
+//     cert = `-----BEGIN CERTIFICATE-----\n${x5c[0]}\n-----END CERTIFICATE-----`;
+    const response = await Axios.get(jwksUrl);
+    const jwks = response.data;
+    const keys:any[] = jwks.keys;
+    logger.info("jwks - "+util.inspect(jwks, false, null, true));
+    const jwt: Jwt = decode(token, { complete: true }) as Jwt;
+    
+//     const signingKey = keys.find(key => key.kid === jwt.header.kid);
+//     let certValue:string = signingKey.x5c[0];
+    
+    const signingKeys = keys.filter(key => key.use === 'sig' // JWK property `use` determines the JWK is for signing
+      && key.kty === 'RSA' // We are only supporting RSA
+      && key.kid           // The `kid` must be present to be useful for later
+      && key.x5c && key.x5c.length // Has useful public keys (we aren't using n or e)
+    ).map(key => {
+      return { kid: key.kid, nbf: key.nbf, x5c: key.x5c[0] };
+    });
+    const signingKey = signingKeys.find(key => key.kid === jwt.header.kid);
+    let certValue:string = signingKey.x5c;
+    certValue = certValue.match(/.{1,64}/g).join('\n');
+    const finalCertKey:string = `-----BEGIN CERTIFICATE-----\n${certValue}\n-----END CERTIFICATE-----\n`;
+    logger.info("finalCertKey - "+util.inspect(finalCertKey, false, null, true));
+    
   } catch (error) {
     console.log('Error While getting Certificate : ', error);
   }
 
-  return verify(token, cert, { algorithms: ['RS256'] }) as JwtPayload;
+//   return verify(token, cert, { algorithms: ['RS256'] }) as JwtPayload;
+    return verify(token, finalCertKey, { algorithms: ['RS256'] }) as JwtPayload;
 }
 
 function getToken(authHeader: string): string {
