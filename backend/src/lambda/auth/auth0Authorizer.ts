@@ -59,21 +59,37 @@ export const handler = async (
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader);
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
+  const jwtKid = jwt.header.kid;
+  let cert: string | Buffer;
 
-  if(!jwt){
-    throw new Error('invalid token')
-  }
+//   try {
+//     const response = await Axios.get(jwksUrl);
+//     const certID = response.data.keys[0].x5c[0];
+//     const cert =
+//     '-----BEGIN CERTIFICATE-----\n' + certID + '\n-----END CERTIFICATE-----'
+//     return verify(token, cert, { algorithms: ['RS256']}) as JwtPayload;
 
+//   } catch (err) {
+//     throw new Error('something went wrong with token');
+//   }
   try {
-    const response = await Axios.get(jwksUrl);
-    const certID = response.data.keys[0].x5c[0];
-    const cert =
-    '-----BEGIN CERTIFICATE-----\n' + certID + '\n-----END CERTIFICATE-----'
-    return verify(token, cert, { algorithms: ['RS256']}) as JwtPayload;
+    if(!jwt){
+      throw new Error('invalid token')
+     }
+    const jwks = await Axios.get(jwksUrl);
+    const signingKey = jwks.data.keys.filter(k => k.kid === jwtKid)[0];
 
-  } catch (err) {
-    throw new Error('something went wrong with token');
+    if (!signingKey) {
+      throw new Error(`Unable to find a signing key that matches '${jwtKid}'`);
+    }
+    const { x5c } = signingKey;
+
+    cert = `-----BEGIN CERTIFICATE-----\n${x5c[0]}\n-----END CERTIFICATE-----`;
+  } catch (error) {
+    console.log('Error While getting Certificate : ', error);
   }
+
+  return verify(token, cert, { algorithms: ['RS256'] }) as JwtPayload;
 }
 
 function getToken(authHeader: string): string {
