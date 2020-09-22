@@ -50,10 +50,6 @@ custom:
         version: v1.0.0
         title: Todos Api
         description: Serverless application for a todo app
-      # models:
-      #   - name: TodoRequest
-      #     contentType: application/json
-      #     schema: ${file(src/models/create-todo-model.json)}
 
 functions:
   Auth:
