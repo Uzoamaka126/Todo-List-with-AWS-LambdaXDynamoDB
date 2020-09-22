@@ -21,9 +21,11 @@ export async function createTodo (createTodoRequest: CreateTodoRequest, jwtToken
   const itemId = uuid.v4();
   const userId = parseUserId(jwtToken);
 
+  logger.info(itemId, userId);
+
   return await todoAccess.createTodo({
     todoId: itemId,
-    userId,
+    userId: userId,
     name: createTodoRequest.name,
     dueDate: createTodoRequest.dueDate,
     done: false,

@@ -29,17 +29,13 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:Scan
-        - dynamodb:PutItem
-        - dynamodb:GetItem
-        - dynamodb:Query
         - codedeploy:*
       Resource:
         - '*'
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+    # - Effect: Allow
+    #   Action:
+    #     - dynamodb:Query
+    #   Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 custom:
   defaultStage: dev
@@ -86,6 +82,8 @@ functions:
     - Effect: Allow
       Action:
         - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_TABLE_INDEX}
     - Effect: Allow
       Action:
@@ -103,6 +101,9 @@ functions:
           method: post
           authorizer: Auth
           path: todos
+          request:
+            schema:
+              application/json: ${file(src/models/create-todo-model.json)}
           documentation:
             summary: Create a new Todo
             description: Create a new todo
@@ -127,10 +128,14 @@ functions:
           cors: true
           method: patch
           path: todos/{todoId}
+          request:
+            schema:
+              application/json: ${file(src/models/update-todo-request.json)}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
+          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
